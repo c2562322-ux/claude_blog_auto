@@ -4,9 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { TARGET_CHAR_COUNT } from '@/lib/utils'
 import type { PostLength, PostPattern, WritingStyle } from '@/types'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
-
 export async function POST(req: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
