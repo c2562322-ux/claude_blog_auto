@@ -6,9 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const POST_LENGTH_MAP = {
-  short: '짧게 (600자)',
-  medium: '기본 (900자)',
-  long: '길게 (1200자)',
+  short: '짧게 (1000자)',
+  medium: '기본 (1200자)',
+  long: '길게 (1500자)',
 }
 
 export const POST_PATTERN_MAP = {
@@ -17,7 +17,7 @@ export const POST_PATTERN_MAP = {
 }
 
 export const TARGET_CHAR_COUNT = {
-  short: 600,
-  medium: 900,
-  long: 1200,
+  short: 1000,
+  medium: 1200,
+  long: 1500,
 }
