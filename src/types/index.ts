@@ -60,6 +60,7 @@ export interface Post {
   length: PostLength
   seo_keywords: string | null
   content: string
+  regenerated_content: string | null
   char_count: number | null
   status_written: boolean
   status_reviewed: boolean

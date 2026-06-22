@@ -15,6 +15,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
   const [selectedPost, setSelectedPost] = useState<PostWithHospital | null>(null)
   const [copied, setCopied] = useState(false)
+  const [regenCopied, setRegenCopied] = useState(false)
   const [search, setSearch] = useState('')
   const [hospitalFilter, setHospitalFilter] = useState('')
   const [hospitals, setHospitals] = useState<Hospital[]>([])
@@ -26,8 +27,6 @@ export default function HistoryPage() {
   const [analysisResult, setAnalysisResult] = useState<string | null>(null)
   const [extractedRules, setExtractedRules] = useState<string | null>(null)
   const [regenerating, setRegenerating] = useState(false)
-  const [regeneratedContent, setRegeneratedContent] = useState<string | null>(null)
-  const [regenCopied, setRegenCopied] = useState(false)
 
   useEffect(() => { loadPosts() }, [])
 
@@ -36,6 +35,7 @@ export default function HistoryPage() {
     if (PREVIEW_MODE) {
       const postsWithHospital = mockPosts.map(p => ({
         ...p,
+        regenerated_content: null,
         hospital: mockHospitals.find(h => h.id === p.hospital_id) as Hospital,
       }))
       setPosts(postsWithHospital as PostWithHospital[])
@@ -63,18 +63,16 @@ export default function HistoryPage() {
     setSavedOriginal('')
     setAnalysisResult(null)
     setExtractedRules(null)
-    setRegeneratedContent(null)
     setCopied(false)
     setRegenCopied(false)
   }
 
-  const downloadTxt = (post: Post) => {
-    const content = `[${post.topic}]\n\n${post.content}`
+  const downloadTxt = (filename: string, content: string) => {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${post.topic}.txt`
+    a.download = `${filename}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -99,7 +97,6 @@ export default function HistoryPage() {
     setEditMode(true)
     setAnalysisResult(null)
     setExtractedRules(null)
-    setRegeneratedContent(null)
   }
 
   const cancelEdit = () => { setEditMode(false); setEditedContent('') }
@@ -143,9 +140,22 @@ export default function HistoryPage() {
         }),
       })
       const data = await res.json()
-      setRegeneratedContent(data.content || data.error || '재생성 실패')
+      const content = data.content || '재생성 실패'
+
+      if (!PREVIEW_MODE && data.content) {
+        await supabase
+          .from('posts')
+          .update({ regenerated_content: content })
+          .eq('id', selectedPost.id)
+      }
+
+      const updated = { ...selectedPost, regenerated_content: content }
+      setSelectedPost(updated)
+      setPosts(prev => prev.map(p => p.id === selectedPost.id ? { ...p, regenerated_content: content } : p))
+      setAnalysisResult(null)
+      setExtractedRules(null)
     } catch {
-      setRegeneratedContent('재생성 중 오류가 발생했습니다.')
+      // keep analysis visible
     } finally {
       setRegenerating(false)
     }
@@ -197,7 +207,12 @@ export default function HistoryPage() {
                   : 'border-gray-700 bg-gray-800 hover:border-gray-600'
               }`}
             >
-              <p className="text-sm font-medium text-gray-100 mb-1 line-clamp-1">{post.topic}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm font-medium text-gray-100 line-clamp-1 flex-1">{post.topic}</p>
+                {post.regenerated_content && (
+                  <span className="flex-shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-purple-900/50 text-purple-400">AI수정</span>
+                )}
+              </div>
               <p className="text-xs text-gray-500">{post.hospital?.name} · {POST_PATTERN_MAP[post.pattern]}</p>
               <p className="text-xs text-gray-600 mt-0.5">{new Date(post.created_at).toLocaleDateString('ko-KR')}</p>
               <div className="flex items-center gap-1 mt-2">
@@ -232,7 +247,7 @@ export default function HistoryPage() {
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {!editMode && (
                     <>
-                      <button onClick={() => downloadTxt(selectedPost)} className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700">
+                      <button onClick={() => downloadTxt(selectedPost.topic, selectedPost.content)} className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700">
                         <Download size={11} />.txt
                       </button>
                       <button onClick={() => copy(selectedPost.content)} className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700">
@@ -262,6 +277,8 @@ export default function HistoryPage() {
             {/* 본문 영역 */}
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto min-h-0">
+
+                {/* 원본 글 */}
                 {editMode ? (
                   <textarea
                     value={editedContent}
@@ -274,6 +291,43 @@ export default function HistoryPage() {
                   </pre>
                 )}
 
+                {/* AI 수정본 — 저장된 것 */}
+                {selectedPost.regenerated_content && !analysisResult && !regenerating && (
+                  <div className="mx-5 mb-5 border-t border-gray-700 pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-400 font-medium">AI 수정본</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => downloadTxt(`${selectedPost.topic}_AI수정`, selectedPost.regenerated_content!)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700"
+                        >
+                          <Download size={11} />.txt
+                        </button>
+                        <button
+                          onClick={() => copy(selectedPost.regenerated_content!, true)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-700 text-white rounded-lg text-xs hover:bg-purple-800"
+                        >
+                          {regenCopied ? <Check size={11} /> : <Copy size={11} />}
+                          {regenCopied ? '복사됨' : '복사'}
+                        </button>
+                        <button
+                          onClick={startEdit}
+                          className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700"
+                          title="AI 수정본 기반으로 다시 수정"
+                        >
+                          <RefreshCw size={11} />재수정
+                        </button>
+                      </div>
+                    </div>
+                    <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed font-sans">
+                      {selectedPost.regenerated_content}
+                    </pre>
+                  </div>
+                )}
+
+                {/* 분석 중 */}
                 {analyzing && (
                   <div className="mx-5 mb-4 p-4 bg-blue-900/30 rounded-xl border border-blue-800 flex items-center gap-2">
                     <Loader2 size={14} className="animate-spin text-blue-400" />
@@ -281,6 +335,7 @@ export default function HistoryPage() {
                   </div>
                 )}
 
+                {/* 분석 결과 */}
                 {analysisResult && !analyzing && (
                   <div className="mx-5 mb-4 p-4 bg-blue-900/30 rounded-xl border border-blue-800">
                     <div className="flex items-center justify-between mb-3">
@@ -298,32 +353,16 @@ export default function HistoryPage() {
                   </div>
                 )}
 
+                {/* 재생성 중 */}
                 {regenerating && (
-                  <div className="mx-5 mb-4 p-4 bg-green-900/30 rounded-xl border border-green-800 flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-green-400" />
-                    <p className="text-sm text-green-300">학습된 스타일로 글을 재생성하고 있습니다...</p>
-                  </div>
-                )}
-
-                {regeneratedContent && !regenerating && (
-                  <div className="mx-5 mb-5 p-4 bg-green-900/30 rounded-xl border border-green-800">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-green-300">재생성된 글</h3>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => downloadTxt({ ...selectedPost, content: regeneratedContent })} className="flex items-center gap-1 px-2.5 py-1.5 text-green-400 border border-green-700 rounded-lg text-xs hover:bg-green-900/50">
-                          <Download size={11} />.txt
-                        </button>
-                        <button onClick={() => copy(regeneratedContent, true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">
-                          {regenCopied ? <Check size={11} /> : <Copy size={11} />}
-                          {regenCopied ? '복사됨' : '복사'}
-                        </button>
-                      </div>
-                    </div>
-                    <pre className="text-xs text-green-200 whitespace-pre-wrap leading-relaxed">{regeneratedContent}</pre>
+                  <div className="mx-5 mb-4 p-4 bg-purple-900/30 rounded-xl border border-purple-800 flex items-center gap-2">
+                    <Loader2 size={14} className="animate-spin text-purple-400" />
+                    <p className="text-sm text-purple-300">학습된 스타일로 글을 재생성하고 있습니다...</p>
                   </div>
                 )}
               </div>
 
+              {/* 편집 모드 하단 액션 바 */}
               {editMode && (
                 <div className="flex-shrink-0 border-t border-gray-700 px-5 py-3 bg-gray-800 flex items-center gap-3">
                   <button

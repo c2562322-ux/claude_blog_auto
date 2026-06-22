@@ -84,6 +84,7 @@ function GenerateContent() {
       setResult(data.content)
       setCharCount(data.charCount)
       setSaveWarning(!data.postId)
+      if (data.saveError) console.error('Save error:', data.saveError)
     } catch { setError('네트워크 오류가 발생했습니다.') }
     finally { setGenerating(false) }
   }
