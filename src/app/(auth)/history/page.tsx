@@ -20,12 +20,17 @@ export default function HistoryPage() {
   const [hospitalFilter, setHospitalFilter] = useState('')
   const [hospitals, setHospitals] = useState<Hospital[]>([])
 
+  // 편집 상태
   const [editMode, setEditMode] = useState(false)
   const [editedContent, setEditedContent] = useState('')
   const [savedOriginal, setSavedOriginal] = useState('')
+
+  // 분석 상태
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<string | null>(null)
   const [extractedRules, setExtractedRules] = useState<string | null>(null)
+
+  // 재생성 상태
   const [regenerating, setRegenerating] = useState(false)
 
   useEffect(() => { loadPosts() }, [])
@@ -99,12 +104,16 @@ export default function HistoryPage() {
     setExtractedRules(null)
   }
 
-  const cancelEdit = () => { setEditMode(false); setEditedContent('') }
+  const cancelEdit = () => {
+    setEditMode(false)
+    setEditedContent('')
+    setAnalysisResult(null)
+    setExtractedRules(null)
+  }
 
   const analyzeChanges = async () => {
     if (!savedOriginal || editedContent === savedOriginal) return
     setAnalyzing(true)
-    setEditMode(false)
     try {
       const res = await fetch('/api/analyze-diff', {
         method: 'POST',
@@ -152,10 +161,14 @@ export default function HistoryPage() {
       const updated = { ...selectedPost, regenerated_content: content }
       setSelectedPost(updated)
       setPosts(prev => prev.map(p => p.id === selectedPost.id ? { ...p, regenerated_content: content } : p))
+
+      // 편집 모드 종료 후 AI 수정본 뷰로
+      setEditMode(false)
       setAnalysisResult(null)
       setExtractedRules(null)
+      setEditedContent('')
     } catch {
-      // keep analysis visible
+      setAnalysisResult(prev => prev ? prev + '\n\n재생성 중 오류가 발생했습니다.' : '재생성 중 오류가 발생했습니다.')
     } finally {
       setRegenerating(false)
     }
@@ -172,7 +185,7 @@ export default function HistoryPage() {
   return (
     <div className="p-8 flex gap-6 h-full">
       {/* 왼쪽: 목록 */}
-      <div className="w-80 flex-shrink-0 flex flex-col gap-4">
+      <div className="w-72 flex-shrink-0 flex flex-col gap-3">
         <h1 className="text-xl font-bold text-gray-100">히스토리</h1>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -229,12 +242,13 @@ export default function HistoryPage() {
       <div className="flex-1 flex flex-col min-h-0">
         {selectedPost ? (
           <div className="flex-1 bg-gray-800 rounded-xl border border-gray-700 flex flex-col min-h-0">
+
             {/* 헤더 */}
-            <div className="px-5 py-4 border-b border-gray-700 flex-shrink-0">
-              <div className="flex items-start justify-between gap-3">
+            <div className="px-5 py-3 border-b border-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="font-semibold text-gray-100 truncate">{selectedPost.topic}</h2>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 flex-wrap">
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 flex-wrap">
                     <span>{selectedPost.hospital?.name}</span>
                     <span>·</span>
                     <span>{POST_PATTERN_MAP[selectedPost.pattern]}</span>
@@ -245,7 +259,7 @@ export default function HistoryPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {!editMode && (
+                  {!editMode ? (
                     <>
                       <button onClick={() => downloadTxt(selectedPost.topic, selectedPost.content)} className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700">
                         <Download size={11} />.txt
@@ -261,10 +275,9 @@ export default function HistoryPage() {
                         <Trash2 size={11} />삭제
                       </button>
                     </>
-                  )}
-                  {editMode && (
+                  ) : (
                     <>
-                      <span className="text-xs text-orange-400 font-medium">수정 중</span>
+                      <span className="text-xs text-orange-400 font-medium px-2">수정 중</span>
                       <button onClick={cancelEdit} className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700">
                         <X size={11} />취소
                       </button>
@@ -274,30 +287,18 @@ export default function HistoryPage() {
               </div>
             </div>
 
-            {/* 본문 영역 */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* 본문: 일반 뷰 */}
+            {!editMode && (
               <div className="flex-1 overflow-y-auto min-h-0">
+                <pre className="p-5 text-sm text-gray-200 whitespace-pre-wrap leading-relaxed font-sans">
+                  {selectedPost.content}
+                </pre>
 
-                {/* 원본 글 */}
-                {editMode ? (
-                  <textarea
-                    value={editedContent}
-                    onChange={e => setEditedContent(e.target.value)}
-                    className="w-full min-h-[300px] p-5 text-sm text-gray-200 leading-relaxed font-sans resize-none focus:outline-none bg-transparent"
-                  />
-                ) : (
-                  <pre className="p-5 text-sm text-gray-200 whitespace-pre-wrap leading-relaxed font-sans">
-                    {selectedPost.content}
-                  </pre>
-                )}
-
-                {/* AI 수정본 — 저장된 것 */}
-                {selectedPost.regenerated_content && !analysisResult && !regenerating && (
-                  <div className="mx-5 mb-5 border-t border-gray-700 pt-4">
+                {/* AI 수정본 */}
+                {selectedPost.regenerated_content && (
+                  <div className="mx-5 mb-5 border-t border-gray-700 pt-5">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-400 font-medium">AI 수정본</span>
-                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-400 font-medium">AI 수정본</span>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => downloadTxt(`${selectedPost.topic}_AI수정`, selectedPost.regenerated_content!)}
@@ -312,13 +313,6 @@ export default function HistoryPage() {
                           {regenCopied ? <Check size={11} /> : <Copy size={11} />}
                           {regenCopied ? '복사됨' : '복사'}
                         </button>
-                        <button
-                          onClick={startEdit}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-gray-400 border border-gray-600 rounded-lg text-xs hover:bg-gray-700"
-                          title="AI 수정본 기반으로 다시 수정"
-                        >
-                          <RefreshCw size={11} />재수정
-                        </button>
                       </div>
                     </div>
                     <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed font-sans">
@@ -326,59 +320,97 @@ export default function HistoryPage() {
                     </pre>
                   </div>
                 )}
-
-                {/* 분석 중 */}
-                {analyzing && (
-                  <div className="mx-5 mb-4 p-4 bg-blue-900/30 rounded-xl border border-blue-800 flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-blue-400" />
-                    <p className="text-sm text-blue-300">변경점을 분석하고 있습니다...</p>
-                  </div>
-                )}
-
-                {/* 분석 결과 */}
-                {analysisResult && !analyzing && (
-                  <div className="mx-5 mb-4 p-4 bg-blue-900/30 rounded-xl border border-blue-800">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-blue-300">변경점 분석 결과</h3>
-                      <button
-                        onClick={regenerateWithStyle}
-                        disabled={regenerating || !extractedRules}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        {regenerating ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
-                        {regenerating ? '재생성 중...' : '이 스타일로 재생성'}
-                      </button>
-                    </div>
-                    <pre className="text-xs text-blue-200 whitespace-pre-wrap leading-relaxed">{analysisResult}</pre>
-                  </div>
-                )}
-
-                {/* 재생성 중 */}
-                {regenerating && (
-                  <div className="mx-5 mb-4 p-4 bg-purple-900/30 rounded-xl border border-purple-800 flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-purple-400" />
-                    <p className="text-sm text-purple-300">학습된 스타일로 글을 재생성하고 있습니다...</p>
-                  </div>
-                )}
               </div>
+            )}
 
-              {/* 편집 모드 하단 액션 바 */}
-              {editMode && (
+            {/* 본문: 편집 모드 (맞춤법 검사기 스타일) */}
+            {editMode && (
+              <div className="flex-1 flex flex-col min-h-0">
+
+                {/* 원본 | 수정 2컬럼 */}
+                <div className="flex flex-1 min-h-0">
+                  {/* 왼쪽: 원본 (읽기 전용) */}
+                  <div className="flex-1 flex flex-col min-h-0 border-r border-gray-700">
+                    <div className="px-4 py-2 bg-gray-900/40 border-b border-gray-700 flex-shrink-0">
+                      <span className="text-xs text-gray-500 font-medium">원본</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <pre className="p-5 text-sm text-gray-400 whitespace-pre-wrap leading-relaxed font-sans select-text">
+                        {savedOriginal}
+                      </pre>
+                    </div>
+                  </div>
+
+                  {/* 오른쪽: 편집 가능 */}
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <div className="px-4 py-2 bg-gray-900/40 border-b border-gray-700 flex-shrink-0 flex items-center justify-between">
+                      <span className="text-xs text-gray-300 font-medium">수정</span>
+                      {isEdited && <span className="text-xs text-orange-400">변경됨</span>}
+                    </div>
+                    <textarea
+                      value={editedContent}
+                      onChange={e => setEditedContent(e.target.value)}
+                      className="flex-1 p-5 text-sm text-gray-100 leading-relaxed font-sans resize-none focus:outline-none bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* 분석 결과 영역 */}
+                {(analyzing || analysisResult) && (
+                  <div className="flex-shrink-0 border-t border-gray-700 bg-gray-900/30 max-h-60 overflow-y-auto">
+                    {analyzing && (
+                      <div className="flex items-center gap-2 p-4">
+                        <Loader2 size={14} className="animate-spin text-blue-400" />
+                        <span className="text-sm text-blue-300">변경점을 분석하고 있습니다...</span>
+                      </div>
+                    )}
+                    {analysisResult && !analyzing && (
+                      <div className="p-4">
+                        <p className="text-xs font-semibold text-blue-400 mb-2">변경점 분석 결과</p>
+                        <pre className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{analysisResult}</pre>
+                      </div>
+                    )}
+                    {regenerating && (
+                      <div className="flex items-center gap-2 px-4 pb-4">
+                        <Loader2 size={14} className="animate-spin text-purple-400" />
+                        <span className="text-sm text-purple-300">학습된 스타일로 재생성하고 있습니다...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 하단 액션 바 */}
                 <div className="flex-shrink-0 border-t border-gray-700 px-5 py-3 bg-gray-800 flex items-center gap-3">
                   <button
                     onClick={analyzeChanges}
-                    disabled={!isEdited || analyzing}
+                    disabled={!isEdited || analyzing || regenerating}
                     className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {analyzing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                    {analyzing ? '분석 중...' : '변경점 분석하기'}
+                    {analyzing ? '분석 중...' : '변경점 분석'}
                   </button>
-                  <p className="text-xs text-gray-500">
-                    {isEdited ? '원본과 비교하여 문체/어미 변화를 추출합니다.' : '글을 수정하면 분석할 수 있습니다.'}
+
+                  {extractedRules && !analyzing && (
+                    <button
+                      onClick={regenerateWithStyle}
+                      disabled={regenerating}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-purple-700 text-white rounded-lg text-sm font-medium hover:bg-purple-800 disabled:opacity-50"
+                    >
+                      {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                      {regenerating ? '재생성 중...' : '학습 후 재생성'}
+                    </button>
+                  )}
+
+                  <p className="text-xs text-gray-600 ml-auto">
+                    {!isEdited
+                      ? '오른쪽 글을 수정하면 분석할 수 있습니다'
+                      : analysisResult
+                      ? '분석 완료 — 학습 후 재생성하거나 계속 수정하세요'
+                      : '수정 완료 후 변경점 분석을 눌러주세요'}
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 bg-gray-800 rounded-xl border border-gray-700 flex items-center justify-center text-gray-500 text-sm">

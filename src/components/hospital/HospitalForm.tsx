@@ -16,7 +16,6 @@ type ConditionFields = {
   doctorInfo: string
   strengths: string
   target: string
-  includeExpr: string
   excludeExpr: string
   customPrompt: string
 }
@@ -25,7 +24,6 @@ const SECTION_MAP: Record<string, keyof ConditionFields> = {
   '원장 정보': 'doctorInfo',
   '병원 강점': 'strengths',
   '타겟 고객': 'target',
-  '포함할 표현': 'includeExpr',
   '금지 표현': 'excludeExpr',
   '추가 프롬프트': 'customPrompt',
 }
@@ -34,7 +32,6 @@ const SECTION_LABELS: [keyof ConditionFields, string][] = [
   ['doctorInfo', '원장 정보'],
   ['strengths', '병원 강점'],
   ['target', '타겟 고객'],
-  ['includeExpr', '포함할 표현'],
   ['excludeExpr', '금지 표현'],
   ['customPrompt', '추가 프롬프트 (전체 자유 입력)'],
 ]
@@ -43,13 +40,12 @@ const CONDITION_PLACEHOLDERS: Record<keyof ConditionFields, string> = {
   doctorInfo: '예: 김민준 원장 (정형외과 전문의 20년 경력)',
   strengths: '예: 비수술 도수치료, 체외충격파 장비 보유, 건강보험 적용 가능',
   target: '예: 40~60대 직장인, 허리/무릎 통증으로 고생하는 주부',
-  includeExpr: '예: 주차 30대 가능, 화목 야간진료 7시까지',
   excludeExpr: '예: 완치, 100% 효과, 최고, 최저',
   customPrompt: '위 항목 외에 AI에게 추가로 전달할 내용을 자유롭게 작성하세요.',
 }
 
 function parseConditions(raw: string | null): ConditionFields {
-  const empty: ConditionFields = { doctorInfo: '', strengths: '', target: '', includeExpr: '', excludeExpr: '', customPrompt: '' }
+  const empty: ConditionFields = { doctorInfo: '', strengths: '', target: '', excludeExpr: '', customPrompt: '' }
   if (!raw) return empty
 
   const lines = raw.split('\n')
@@ -78,7 +74,6 @@ function combineConditions(fields: ConditionFields): string {
     doctorInfo: '원장 정보',
     strengths: '병원 강점',
     target: '타겟 고객',
-    includeExpr: '포함할 표현',
     excludeExpr: '금지 표현',
     customPrompt: '추가 프롬프트',
   }
