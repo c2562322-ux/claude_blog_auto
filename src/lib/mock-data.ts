@@ -1,0 +1,118 @@
+import type { Hospital, Post, User } from '@/types'
+
+export const PREVIEW_MODE = process.env.NEXT_PUBLIC_PREVIEW_MODE === 'true'
+
+export const mockUser: User = {
+  id: 'preview-user-1',
+  name: '홍길동 (관리자)',
+  email: 'admin@hospital.com',
+  role: 'admin',
+  created_at: new Date().toISOString(),
+}
+
+export const mockHospitals: Hospital[] = [
+  {
+    id: 'h1',
+    name: '서울 정형외과의원',
+    specialty: '정형외과',
+    location: '서울 강남구',
+    phone: '02-1234-5678',
+    hours: '평일 09:00-18:00, 토 09:00-13:00',
+    doctor_name: '김민준 원장',
+    conditions: '- 원장명: 김민준 원장 (정형외과 전문의 20년)\n- 강점: 비수술 도수치료, 체외충격파 장비 보유\n- 타겟: 40~60대 직장인, 주부\n- 항상 포함: 주차 30대, 화목 야간진료 7시까지\n- 금지 표현: 완치, 100% 효과',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    examples: [],
+    topics: [
+      { id: 't1', hospital_id: 'h1', topic: '허리디스크 비수술 치료', created_at: new Date().toISOString() },
+      { id: 't2', hospital_id: 'h1', topic: '무릎 관절염 관리법', created_at: new Date().toISOString() },
+      { id: 't3', hospital_id: 'h1', topic: '어깨 통증 원인과 치료', created_at: new Date().toISOString() },
+    ],
+  },
+  {
+    id: 'h2',
+    name: '강남 내과의원',
+    specialty: '내과',
+    location: '서울 강남구',
+    phone: '02-9876-5432',
+    hours: '평일 09:00-19:00, 토 09:00-14:00',
+    doctor_name: '이수진 원장',
+    conditions: '- 원장명: 이수진 원장 (내과 전문의)\n- 강점: 건강검진, 만성질환 관리\n- 타겟: 30~50대 직장인',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    examples: [],
+    topics: [],
+  },
+  {
+    id: 'h3',
+    name: '분당 피부과의원',
+    specialty: '피부과',
+    location: '경기 성남시 분당구',
+    phone: '031-555-1234',
+    hours: '평일 10:00-19:00',
+    doctor_name: '박지현 원장',
+    conditions: '- 강점: 레이저 시술, 피부 트러블 전문',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    examples: [],
+    topics: [],
+  },
+]
+
+export const mockPosts: Post[] = [
+  {
+    id: 'p1',
+    hospital_id: 'h1',
+    user_id: 'preview-user-1',
+    topic: '허리디스크 비수술 치료법',
+    pattern: 'informative',
+    length: 'medium',
+    seo_keywords: '강남 정형외과, 허리디스크',
+    content: '허리 통증, 혹시 디스크일까요?\n\n현대인들의 고질병이 된 허리 통증. 오래 앉아서 일하는 직장인들에게는 더욱 친숙한 고통이죠. 오늘은 서울 강남구에 위치한 서울 정형외과의원에서 허리디스크 비수술 치료에 대해 알아보겠습니다.\n\n## 허리디스크, 꼭 수술해야 할까요?\n\n많은 분들이 "허리디스크 = 수술"이라고 생각하시지만, 실제로 전체 허리디스크 환자의 90% 이상은 비수술적 방법으로 충분히 호전될 수 있습니다. 서울 정형외과의원 김민준 원장은 "20년 임상 경험상 대부분의 디스크 환자는 체계적인 보존 치료만으로도 일상생활 복귀가 가능하다"고 말씀하십니다.\n\n## 비수술 치료의 핵심, 도수치료와 체외충격파\n\n서울 정형외과의원에서는 도수치료와 체외충격파 치료를 통해 디스크의 근본 원인을 해결합니다. 건강보험 적용이 가능해 부담 없이 치료받으실 수 있으며, 주차는 30대까지 가능합니다.\n\n화요일과 목요일은 저녁 7시까지 진료하니 직장인분들도 퇴근 후 방문하실 수 있습니다.\n\n📞 02-1234-5678 | 서울 강남구 서울 정형외과의원',
+    char_count: 580,
+    status_written: true,
+    status_reviewed: false,
+    status_published: false,
+    publish_notes: '사진 추가 필요',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'p2',
+    hospital_id: 'h1',
+    user_id: 'preview-user-1',
+    topic: '무릎 관절염 관리법',
+    pattern: 'doctor',
+    length: 'long',
+    seo_keywords: null,
+    content: '저는 매일 진료실에서 무릎 통증으로 오시는 환자분들을 뵙습니다...',
+    char_count: 1150,
+    status_written: true,
+    status_reviewed: true,
+    status_published: true,
+    publish_notes: null,
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+  },
+  {
+    id: 'p3',
+    hospital_id: 'h2',
+    user_id: 'preview-user-1',
+    topic: '건강검진 꼭 받아야 하는 이유',
+    pattern: 'informative',
+    length: 'short',
+    seo_keywords: '강남 내과, 건강검진',
+    content: '매년 건강검진, 챙기고 계신가요?...',
+    char_count: 590,
+    status_written: false,
+    status_reviewed: false,
+    status_published: false,
+    publish_notes: null,
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+]
+
+export const mockUsers: User[] = [
+  { id: 'preview-user-1', name: '홍길동', email: 'admin@hospital.com', role: 'admin', created_at: new Date().toISOString() },
+  { id: 'preview-user-2', name: '김지은', email: 'user2@hospital.com', role: 'member', created_at: new Date().toISOString() },
+  { id: 'preview-user-3', name: '이민호', email: 'user3@hospital.com', role: 'member', created_at: new Date().toISOString() },
+  { id: 'preview-user-4', name: '박소연', email: 'user4@hospital.com', role: 'member', created_at: new Date().toISOString() },
+]
