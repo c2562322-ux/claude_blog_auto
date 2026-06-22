@@ -15,7 +15,6 @@ interface HospitalFormProps {
 type ConditionFields = {
   doctorInfo: string
   strengths: string
-  target: string
   excludeExpr: string
   customPrompt: string
 }
@@ -23,7 +22,7 @@ type ConditionFields = {
 const SECTION_MAP: Record<string, keyof ConditionFields> = {
   '원장 정보': 'doctorInfo',
   '병원 강점': 'strengths',
-  '타겟 고객': 'target',
+  '타겟 고객': 'strengths', // 구버전 호환: 타겟 고객 → 강점으로 병합
   '금지 표현': 'excludeExpr',
   '추가 프롬프트': 'customPrompt',
 }
@@ -31,7 +30,6 @@ const SECTION_MAP: Record<string, keyof ConditionFields> = {
 const SECTION_LABELS: [keyof ConditionFields, string][] = [
   ['doctorInfo', '원장 정보'],
   ['strengths', '병원 강점'],
-  ['target', '타겟 고객'],
   ['excludeExpr', '금지 표현'],
   ['customPrompt', '추가 프롬프트 (전체 자유 입력)'],
 ]
@@ -39,13 +37,12 @@ const SECTION_LABELS: [keyof ConditionFields, string][] = [
 const CONDITION_PLACEHOLDERS: Record<keyof ConditionFields, string> = {
   doctorInfo: '예: 김민준 원장 (정형외과 전문의 20년 경력)',
   strengths: '예: 비수술 도수치료, 체외충격파 장비 보유, 건강보험 적용 가능',
-  target: '예: 40~60대 직장인, 허리/무릎 통증으로 고생하는 주부',
   excludeExpr: '예: 완치, 100% 효과, 최고, 최저',
   customPrompt: '위 항목 외에 AI에게 추가로 전달할 내용을 자유롭게 작성하세요.',
 }
 
 function parseConditions(raw: string | null): ConditionFields {
-  const empty: ConditionFields = { doctorInfo: '', strengths: '', target: '', excludeExpr: '', customPrompt: '' }
+  const empty: ConditionFields = { doctorInfo: '', strengths: '', excludeExpr: '', customPrompt: '' }
   if (!raw) return empty
 
   const lines = raw.split('\n')
@@ -73,7 +70,6 @@ function combineConditions(fields: ConditionFields): string {
   const labelMap: Record<keyof ConditionFields, string> = {
     doctorInfo: '원장 정보',
     strengths: '병원 강점',
-    target: '타겟 고객',
     excludeExpr: '금지 표현',
     customPrompt: '추가 프롬프트',
   }
@@ -99,7 +95,7 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
   })
 
   const [conditionFields, setConditionFields] = useState<ConditionFields>(
-    parseConditions(hospital?.conditions || null)
+    parseConditions(hospital?.conditions ?? null)
   )
 
   const [doctorNames, setDoctorNames] = useState<string[]>(
@@ -217,20 +213,20 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
     { id: 'topics', label: `주제 목록 (${topics.length})` },
   ] as const
 
-  const inputClass = 'w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+  const inputClass = 'w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 
   return (
-    <div className="bg-gray-800 rounded-xl border border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
       {/* 탭 */}
-      <div className="flex border-b border-gray-700">
+      <div className="flex border-b border-gray-200 dark:border-gray-700">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`px-5 py-3 text-sm font-medium transition-colors ${
               tab === t.id
-                ? 'border-b-2 border-blue-500 text-blue-400'
-                : 'text-gray-500 hover:text-gray-300'
+                ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             {t.label}
@@ -244,16 +240,16 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">병원명 *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">병원명 *</label>
                 <input name="name" value={form.name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">진료과목</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">진료과목</label>
                 <input name="specialty" value={form.specialty} onChange={handleChange} className={inputClass} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">원장명 *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">원장명 *</label>
               <div className="space-y-2">
                 {doctorNames.map((name, i) => (
                   <div key={i} className="flex gap-2">
@@ -277,7 +273,7 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
                 <button
                   type="button"
                   onClick={() => setDoctorNames(prev => [...prev, ''])}
-                  className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-1"
+                  className="flex items-center gap-1 text-sm text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 mt-1"
                 >
                   <Plus size={14} />원장 추가
                 </button>
@@ -292,7 +288,7 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
             <p className="text-xs text-gray-500">항목별로 입력하면 AI가 글 생성 시 자동으로 반영합니다.</p>
             {SECTION_LABELS.map(([key, label]) => (
               <div key={key}>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">{label}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{label}</label>
                 <textarea
                   value={conditionFields[key]}
                   onChange={e => handleConditionChange(key, e.target.value)}
@@ -310,7 +306,7 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-500">기존 블로그 글을 업로드하면 동일한 문체로 글을 생성합니다.</p>
-              <label className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 text-gray-300 rounded-lg text-xs hover:bg-gray-600 cursor-pointer">
+              <label className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-xs hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer border border-gray-300 dark:border-gray-600">
                 <Upload size={14} />
                 .txt 파일 업로드
                 <input type="file" accept=".txt" multiple className="hidden" onChange={handleFileUpload} />
@@ -318,15 +314,15 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
             </div>
             <div className="space-y-3 mb-4">
               {examples.map((ex, i) => (
-                <div key={i} className="border border-gray-700 rounded-lg p-4">
+                <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <input
                       value={ex.title}
                       onChange={e => setExamples(prev => prev.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item))}
-                      className="text-sm font-medium text-gray-200 border-none outline-none bg-transparent flex-1"
+                      className="text-sm font-medium text-gray-800 dark:text-gray-200 border-none outline-none bg-transparent flex-1"
                       placeholder="제목 (선택)"
                     />
-                    <button onClick={() => deleteExample(i)} className="text-gray-600 hover:text-red-400">
+                    <button onClick={() => deleteExample(i)} className="text-gray-400 hover:text-red-400">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -334,7 +330,7 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
                 </div>
               ))}
             </div>
-            <div className="border-2 border-dashed border-gray-700 rounded-lg p-6">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6">
               <p className="text-sm text-gray-500 text-center mb-3">또는 직접 붙여넣기</p>
               <textarea
                 rows={5}
@@ -369,9 +365,9 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
             </div>
             <div className="flex flex-wrap gap-2">
               {topics.map((t, i) => (
-                <span key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-700 text-gray-300 rounded-full text-sm">
+                <span key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm border border-gray-200 dark:border-gray-600">
                   {t.topic}
-                  <button onClick={() => deleteTopic(i)} className="text-gray-500 hover:text-red-400">
+                  <button onClick={() => deleteTopic(i)} className="text-gray-400 hover:text-red-400">
                     <Trash2 size={12} />
                   </button>
                 </span>
@@ -382,11 +378,11 @@ export default function HospitalForm({ mode, hospital }: HospitalFormProps) {
       </div>
 
       {error && (
-        <div className="mx-6 mb-4 p-3 bg-red-900/30 text-red-400 rounded-lg text-sm border border-red-800">{error}</div>
+        <div className="mx-6 mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm border border-red-200 dark:border-red-800">{error}</div>
       )}
 
       <div className="px-6 pb-6 flex items-center justify-between">
-        <button onClick={() => router.back()} className="px-4 py-2 text-gray-400 border border-gray-600 rounded-lg text-sm hover:bg-gray-700">
+        <button onClick={() => router.back()} className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
           취소
         </button>
         <button

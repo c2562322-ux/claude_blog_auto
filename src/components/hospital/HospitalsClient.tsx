@@ -15,7 +15,7 @@ export default function HospitalsClient({ initialHospitals }: Props) {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-100">병원 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">병원 관리</h1>
         <Link
           href="/hospitals/new"
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -31,13 +31,13 @@ export default function HospitalsClient({ initialHospitals }: Props) {
             <Link
               key={hospital.id}
               href={`/hospitals/${hospital.id}`}
-              className="bg-gray-800 rounded-xl p-5 border border-gray-700 hover:border-blue-500 hover:bg-gray-750 transition-all flex items-center justify-between group"
+              className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all flex items-center justify-between group"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
-                  <h2 className="font-semibold text-gray-100">{hospital.name}</h2>
+                  <h2 className="font-semibold text-gray-900 dark:text-gray-100">{hospital.name}</h2>
                   {hospital.specialty && (
-                    <span className="text-xs px-2 py-0.5 bg-blue-900/50 text-blue-400 rounded-full">{hospital.specialty}</span>
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 rounded-full">{hospital.specialty}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -51,12 +51,12 @@ export default function HospitalsClient({ initialHospitals }: Props) {
                   </span>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-gray-600 group-hover:text-blue-400 transition-colors flex-shrink-0" />
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
             </Link>
           ))}
         </div>
       ) : (
-        <div className="bg-gray-800 rounded-xl p-12 text-center border border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center border border-gray-200 dark:border-gray-700">
           <p className="text-gray-500 mb-4">등록된 병원이 없습니다.</p>
           <Link
             href="/hospitals/new"

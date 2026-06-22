@@ -34,15 +34,15 @@ export async function POST(req: NextRequest) {
   const targetChars = TARGET_CHAR_COUNT[length as PostLength] || 900
   const examples = hospital.examples?.slice(0, 3) || []
 
-  const hospitalContext = `
-병원명: ${hospital.name}
+  const conditionsSection = hospital.conditions?.trim()
+    ? `\n고정 조건:\n${hospital.conditions.trim()}`
+    : ''
+
+  const hospitalContext = `병원명: ${hospital.name}
 진료과목: ${hospital.specialty || '미입력'}
 지역: ${hospital.location || '미입력'}
 전화번호: ${hospital.phone || '미입력'}
-원장명: ${hospital.doctor_name || '미입력'}
-고정 조건:
-${hospital.conditions || '없음'}
-`.trim()
+원장명: ${hospital.doctor_name || '미입력'}${conditionsSection}`
 
   const examplesContext = examples.length > 0
     ? `\n\n[참고할 기존 글 문체/스타일 - 아래 글들의 어조와 구성을 참고하여 작성하세요]\n` +

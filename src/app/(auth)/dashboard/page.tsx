@@ -47,37 +47,37 @@ export default async function DashboardPage() {
   ]
 
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-900/50 text-blue-400',
-    green: 'bg-green-900/50 text-green-400',
-    purple: 'bg-purple-900/50 text-purple-400',
-    orange: 'bg-orange-900/50 text-orange-400',
+    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
+    green: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400',
+    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
+    orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400',
   }
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-100 mb-8">대시보드</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">대시보드</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map(stat => (
-          <div key={stat.label} className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <div key={stat.label} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className={`inline-flex p-2 rounded-lg mb-3 ${colorMap[stat.color]}`}>
               <stat.icon size={20} />
             </div>
-            <div className="text-2xl font-bold text-gray-100">{stat.value}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</div>
             <div className="text-sm text-gray-500 mt-1">{stat.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-gray-800 rounded-xl border border-gray-700">
-        <div className="px-6 py-4 border-b border-gray-700">
-          <h2 className="font-semibold text-gray-100">최근 생성된 글</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">최근 생성된 글</h2>
         </div>
-        <div className="divide-y divide-gray-700">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {recentPosts.length > 0 ? recentPosts.map(post => (
             <div key={post.id} className="px-6 py-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-100">{post.topic}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{post.topic}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   {post.hospital?.name} · {new Date(post.created_at).toLocaleDateString('ko-KR')}
                 </p>
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
 
 function StatusBadge({ label, done }: { label: string; done: boolean }) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${done ? 'bg-green-900/50 text-green-400' : 'bg-gray-700 text-gray-500'}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full ${done ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-500'}`}>
       {label}
     </span>
   )

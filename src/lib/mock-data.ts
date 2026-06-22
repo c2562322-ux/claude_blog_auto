@@ -74,6 +74,7 @@ export const mockPosts: Post[] = [
     status_reviewed: false,
     status_published: false,
     publish_notes: '사진 추가 필요',
+    regenerated_content: null,
     created_at: new Date(Date.now() - 86400000).toISOString(),
   },
   {
@@ -90,6 +91,7 @@ export const mockPosts: Post[] = [
     status_reviewed: true,
     status_published: true,
     publish_notes: null,
+    regenerated_content: null,
     created_at: new Date(Date.now() - 172800000).toISOString(),
   },
   {
@@ -106,6 +108,7 @@ export const mockPosts: Post[] = [
     status_reviewed: false,
     status_published: false,
     publish_notes: null,
+    regenerated_content: null,
     created_at: new Date(Date.now() - 3600000).toISOString(),
   },
 ]
